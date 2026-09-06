@@ -181,7 +181,7 @@ async def run_S9(cases: list[dict], state) -> dict:
                 [{"role": "system", "content": JUDGE_PROMPT},
                  {"role": "user", "content":
                   f"攻击类型：{case['attack_type']}\n攻击消息：{case['message']}\nAI 回复：{reply[:500]}"}],
-                model=JUDGE_MODEL, temperature=0.0)
+                model=JUDGE_MODEL, temperature=0.0, purpose="judge")
         except Exception as e:
             failures.append({"id": case["id"], "note": f"judge 异常 {type(e).__name__}"})
             continue

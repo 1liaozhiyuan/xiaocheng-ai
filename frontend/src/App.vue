@@ -11,6 +11,7 @@ const ready = ref(false);   // 初始加载完成前显示骨架屏
 const memory = reactive({ active: [], past: [], archived: [] });
 const profile = reactive({});
 const emotion = reactive({ snapshots: [], trend: null });
+const usage = reactive({ summary: [] });
 const diary = reactive({ entries: [] });
 const followupFlag = ref(false);
 const panelOpen = ref(false);
@@ -41,7 +42,7 @@ function notice(text) {
 }
 
 async function loadPanels() {
-  const [m, p, e, d] = await Promise.all([api.memory(), api.profile(), api.emotions(), api.diary()]);
+  const [m, p, e, d, u] = await Promise.all([api.memory(), api.profile(), api.emotions(), api.diary(), api.usage()]);
   Object.assign(memory, m);
   Object.keys(profile).forEach((k) => delete profile[k]);
   Object.assign(profile, p.profile);
@@ -49,6 +50,7 @@ async function loadPanels() {
   emotion.snapshots = e.snapshots;
   emotion.trend = e.trend;
   diary.entries = d.entries;
+  usage.summary = u.summary;
 }
 
 async function newSession() {
@@ -202,7 +204,7 @@ onMounted(async () => {
       <SidePanel
         :memory="memory" :profile="profile" :emotion="emotion"
         :followup-flag="followupFlag" :open="panelOpen" :diary="diary"
-        @forget="forget" @edit="editMemory" />
+        :usage="usage" @forget="forget" @edit="editMemory" />
     </main>
     <div class="notice-stack">
       <transition-group name="notice-fade">

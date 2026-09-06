@@ -37,7 +37,7 @@ class MemoryExtractor:
                     dialog=_fmt_dialog(dialog),
                 )},
             ],
-            temperature=0.0,
+            temperature=0.0, purpose="extract",
         )
         if not isinstance(result, list):
             return []
@@ -151,7 +151,7 @@ class MemoryExtractor:
                         for i, c in enumerate(candidates, 1)),
                 )},
             ],
-            temperature=0.0,
+            temperature=0.0, purpose="merge",
         )
         mapping: dict[int, dict] = {}
         if isinstance(result, list):
@@ -208,7 +208,7 @@ class MemoryExtractor:
                     new_category=new_category, new_memory=new_content,
                 )},
             ],
-            temperature=0.0,
+            temperature=0.0, purpose="merge",
         )
         if not isinstance(result, dict):
             return {"decision": "ADD"}

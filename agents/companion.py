@@ -105,5 +105,5 @@ class CompanionAgent:
             + [{"role": m["role"], "content": m["content"]} for m in history]
             + [{"role": "user", "content": user_message}]
         )
-        async for delta in self._llm.chat_stream(messages, model=model):
+        async for delta in self._llm.chat_stream(messages, model=model, purpose="chat"):
             yield delta

@@ -44,7 +44,7 @@ class SessionReviewer:
                 {"role": "system", "content": prompts.SESSION_SUMMARY_SYSTEM},
                 {"role": "user", "content": _fmt_dialog(dialog)},
             ],
-            model=None, temperature=0.3,
+            model=None, temperature=0.3, purpose="summary",
         )).strip()
         self._store.set_session_summary(session_id, summary)
 
@@ -55,7 +55,7 @@ class SessionReviewer:
                     name=config.PERSONA_NAME)},
                 {"role": "user", "content": _fmt_dialog(dialog)},
             ],
-            model=None, temperature=0.7,
+            model=None, temperature=0.7, purpose="diary",
         )).strip()
         if diary:
             from datetime import datetime
@@ -70,7 +70,7 @@ class SessionReviewer:
                 {"role": "system", "content": prompts.EMOTION_ASSESS_SYSTEM},
                 {"role": "user", "content": _fmt_dialog(dialog)},
             ],
-            temperature=0.0,
+            temperature=0.0, purpose="emotion",
         )
         if not isinstance(result, dict):
             return None
@@ -101,7 +101,7 @@ class SessionReviewer:
                     ),
                 )},
             ],
-            temperature=0.0,
+            temperature=0.0, purpose="dedup",
         )
         if not isinstance(result, dict):
             return 0

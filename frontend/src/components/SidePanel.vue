@@ -9,6 +9,7 @@ defineProps({
   profile: { type: Object, required: true },
   emotion: { type: Object, required: true },
   diary: { type: Object, required: true },
+  usage: { type: Object, required: true },
   followupFlag: { type: Boolean, default: false },
   open: { type: Boolean, default: false },   // 移动端抽屉展开态
 });
@@ -31,7 +32,7 @@ const tabs = [
     </div>
     <div class="panel-body">
       <ProfileTab v-if="tab === 'profile'" :profile="profile" :emotion="emotion"
-                  :followup-flag="followupFlag" />
+                  :followup-flag="followupFlag" :usage="usage" />
       <MemoryTab v-else-if="tab === 'active'" :items="memory.active" forgettable
                  @forget="emit('forget', $event)" @edit="emit('edit', $event)" />
       <MemoryTab v-else-if="tab === 'past'" :items="memory.past" tag-field="date" />

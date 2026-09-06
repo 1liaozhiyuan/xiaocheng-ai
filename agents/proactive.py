@@ -48,7 +48,7 @@ class ProactiveAgent:
                     # 智谱等厂商要求 messages 必须含 user 角色
                     {"role": "user", "content": "请生成现在的开场白。"},
                 ],
-                temperature=0.7,
+                temperature=0.7, purpose="greeting",
             ):
                 collected.append(delta)
                 yield delta

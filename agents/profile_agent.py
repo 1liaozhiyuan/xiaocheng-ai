@@ -33,7 +33,7 @@ class ProfileAgent:
                         for m in memories[:60]),
                 )},
             ],
-            temperature=0.0,
+            temperature=0.0, purpose="profile",
         )
         if not isinstance(result, dict):
             return {}

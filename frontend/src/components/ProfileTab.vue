@@ -3,6 +3,7 @@ defineProps({
   profile: { type: Object, required: true },
   emotion: { type: Object, required: true },
   followupFlag: { type: Boolean, default: false },
+  usage: { type: Object, default: () => ({ summary: [] }) },
 });
 </script>
 
@@ -31,6 +32,13 @@ defineProps({
     </div>
     <div v-if="emotion.trend" class="mood-trend">
       近 {{ emotion.snapshots.length }} 次平均 {{ emotion.trend.toFixed(1) }} / 10
+    </div>
+  </template>
+  <template v-if="usage.summary && usage.summary.length">
+    <div class="k chart-title">Token 用量（近 30 天）</div>
+    <div v-for="u in usage.summary" :key="u.purpose + u.model" class="mem-item">
+      <span class="tag">{{ u.purpose }}</span>
+      <span class="text">{{ u.calls }} 次调用 · 输入 {{ u.prompt_tokens }} + 输出 {{ u.completion_tokens }} = {{ u.total_tokens }} tokens</span>
     </div>
   </template>
 </template>

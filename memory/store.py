@@ -66,6 +66,17 @@ CREATE TABLE IF NOT EXISTS diary (
     content     TEXT NOT NULL,         -- 小澄第一人称日记
     created_at  TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS usage_log (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts                TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    purpose           TEXT NOT NULL,   -- chat/strategy/extract/summary/diary/emotion/merge/greeting/profile/review
+    model             TEXT NOT NULL,
+    prompt_tokens     INTEGER NOT NULL DEFAULT 0,
+    completion_tokens INTEGER NOT NULL DEFAULT 0,
+    latency_ms        INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_usage_ts ON usage_log(ts);
 """
 
 
@@ -256,6 +267,37 @@ class MemoryStore:
         if not p.get("初次见面"):
             self.set_profile("初次见面", datetime.now().strftime("%Y-%m-%d"))
         return self.get_profile()["初次见面"]
+
+    # ── Token 用量 ──
+    def add_usage(self, purpose: str, model: str, prompt_tokens: int,
+                  completion_tokens: int, latency_ms: int = 0) -> None:
+        self._exec(
+            "INSERT INTO usage_log(purpose, model, prompt_tokens, completion_tokens, latency_ms) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (purpose, model, prompt_tokens, completion_tokens, latency_ms),
+        )
+
+    def usage_summary(self, days: int = 30) -> list[dict]:
+        rows = self._exec(
+            "SELECT purpose, model, COUNT(*) AS calls, "
+            "SUM(prompt_tokens) AS prompt_tokens, "
+            "SUM(completion_tokens) AS completion_tokens, "
+            "SUM(prompt_tokens + completion_tokens) AS total_tokens, "
+            "AVG(latency_ms) AS avg_latency_ms "
+            "FROM usage_log WHERE ts >= datetime('now', ?) "
+            "GROUP BY purpose, model ORDER BY total_tokens DESC",
+            (f'-{days} days',),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def usage_daily(self, days: int = 14) -> list[dict]:
+        rows = self._exec(
+            "SELECT date(ts) AS date, SUM(prompt_tokens + completion_tokens) AS total_tokens "
+            "FROM usage_log WHERE ts >= datetime('now', ?) "
+            "GROUP BY date(ts) ORDER BY date",
+            (f'-{days} days',),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
     # ── 用户画像 ──
     def set_profile(self, key: str, value: str) -> None:

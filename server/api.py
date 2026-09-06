@@ -71,6 +71,14 @@ def edit_memory(memory_id: int, body: dict, request: Request):
     return {"ok": True, "content": content}
 
 
+@router.get("/usage")
+def usage(request: Request, days: int = 30):
+    """Token 用量统计：按用途×模型聚合 + 按日趋势。"""
+    state: AppState = request.app.state.core
+    return {"summary": state.store.usage_summary(days),
+            "daily": state.store.usage_daily(days)}
+
+
 @router.get("/diary")
 def diary(request: Request):
     """小澄的日记：她以自己的视角记录与 ta 的相处（睡前整理时生成）。"""

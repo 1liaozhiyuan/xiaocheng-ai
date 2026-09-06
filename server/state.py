@@ -37,7 +37,7 @@ class AppState:
         config.ensure_dirs()
         self.store = MemoryStore()
         self.vector_store = VectorStore(self.store)
-        self.llm = LLMClient()
+        self.llm = LLMClient(store=self.store)
         self.extractor = MemoryExtractor(self.llm, self.store, self.vector_store)
         self.retriever = Retriever(self.store, self.vector_store)
         self.strategist = StrategistAgent(self.llm)

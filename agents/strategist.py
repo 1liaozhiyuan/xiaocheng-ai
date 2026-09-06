@@ -107,7 +107,7 @@ class StrategistAgent:
                            history: list[dict], timeout: float):
         return await asyncio.wait_for(
             self._llm.chat_json(self._decide_messages(user_message, history),
-                                model=model, temperature=0.0),
+                                model=model, temperature=0.0, purpose="strategy"),
             timeout=timeout)
 
     # ── 结果归一化 + 双向词表规则 ──
