@@ -39,5 +39,9 @@ const tabs = [
       <DiaryTab v-else-if="tab === 'diary'" :entries="diary.entries" />
       <MemoryTab v-else :items="memory.archived" tag-label="已淡忘" />
     </div>
+    <div class="export-bar">
+      <a class="export-btn" href="/api/export?format=md" download>📄 导出档案</a>
+      <a class="export-btn" href="/api/export?format=json" download>💾 备份 JSON</a>
+    </div>
   </aside>
 </template>

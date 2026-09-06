@@ -19,6 +19,32 @@ let sessionId = null;
 let greetingAbort = null;   // 开场流：用户先说话时立即中断，把话头交还给用户
 let chatAbort = null;       // 回复流：停止按钮用
 const canStop = computed(() => streaming.value && !!chatAbort);
+
+// ── 语音播报（TTS）：浏览器原生 speechSynthesis，免费零依赖 ──
+const ttsEnabled = ref(localStorage.getItem("tts_enabled") === "1");
+const zhVoice = ref(null);
+function pickVoice() {
+  const vs = speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith("zh"));
+  zhVoice.value = vs.find(v => v.localService) || vs[0] || null;
+}
+if ("speechSynthesis" in window) {
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+function toggleTts() {
+  ttsEnabled.value = !ttsEnabled.value;
+  localStorage.setItem("tts_enabled", ttsEnabled.value ? "1" : "0");
+  if (!ttsEnabled.value) speechSynthesis.cancel();
+}
+function speak(text) {
+  if (!ttsEnabled.value || !("speechSynthesis" in window) || !text) return;
+  speechSynthesis.cancel();  // 打断上一条朗读
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "zh-CN";
+  if (zhVoice.value) u.voice = zhVoice.value;
+  u.rate = 1;
+  speechSynthesis.speak(u);
+}
 const daysKnown = computed(() => {
   if (!profile.value?.["初次见面"] && !profile["初次见面"]) return null;
   const d = new Date(profile["初次见面"]);
@@ -127,6 +153,7 @@ async function send(text) {
     msg.typing = false;
     streaming.value = false;
     chatAbort = null;
+    speak(msg.text);
     // 一个字都没生成就停止/失败时，移除空气泡（避免占位的空白消息）
     if (!msg.text) {
       const i = messages.value.indexOf(msg);
@@ -192,6 +219,8 @@ onMounted(async () => {
     <header>
       <h1>小澄</h1><span class="subtitle">{{ daysKnown === null ? "陪你聊天的朋友" : `认识第 ${daysKnown + 1} 天 · 陪你聊天的朋友` }}</span>
       <div class="spacer"></div>
+      <button :class="{ on: ttsEnabled }" :title="ttsEnabled ? '关闭语音播报' : '开启语音播报'"
+              @click="toggleTts">{{ ttsEnabled ? "🔊" : "🔇" }}</button>
       <button @click="nap" :disabled="napping">
         {{ napping ? "整理中…" : "🌙 小憩一下" }}
       </button>

@@ -32,6 +32,27 @@ function autoGrow() {
   el.style.height = Math.min(el.scrollHeight, 140) + "px";
 }
 
+// ── 语音输入（ASR）：Chrome/Edge 的 Web Speech API，免费零依赖 ──
+const asrSupported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+const recognizing = ref(false);
+let recog = null;
+function toggleMic() {
+  if (recognizing.value) { recog.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recog = new SR();
+  recog.lang = "zh-CN";
+  recog.interimResults = true;
+  recognizing.value = true;
+  recog.onresult = (e) => {
+    let text = "";
+    for (const r of e.results) text += r[0].transcript;
+    draft.value = text;
+  };
+  recog.onend = () => { recognizing.value = false; };
+  recog.onerror = () => { recognizing.value = false; };
+  recog.start();
+}
+
 function send() {
   const text = draft.value.trim();
   if (!text) return;
@@ -64,6 +85,9 @@ function send() {
       <textarea ref="ta" rows="1" v-model="draft" placeholder="和小澄说点什么…（Enter 发送，Shift+Enter 换行）"
                 @keydown.enter.exact.prevent="send"
                 @input="autoGrow"></textarea>
+      <button v-if="asrSupported" class="mic" :class="{ rec: recognizing }"
+              :title="recognizing ? '正在聆听，再说一遍结束' : '语音输入'"
+              @click="toggleMic">{{ recognizing ? "●" : "🎤" }}</button>
       <button v-if="canStop" class="stop" title="停止生成"
               @click="emit('stop')">■ 停止</button>
       <button v-else class="primary" @click="send"

@@ -160,11 +160,13 @@ class StrategistAgent:
             gate = await asyncio.to_thread(self._semantic_gate, user_message)
             if gate >= SEMANTIC_GATE_THRESHOLD:
                 try:
+                    recheck_model = (config.CRISIS_RECHECK_MODEL
+                                     or config.CHAT_MODEL_HEAVY)
                     verdict = await asyncio.wait_for(
                         self._llm.chat_json(
                             [{"role": "system", "content": BINARY_IDEATION_PROMPT},
                              {"role": "user", "content": user_message}],
-                            model=config.CHAT_MODEL_HEAVY, temperature=0.0),
+                            model=recheck_model, temperature=0.0),
                         timeout=15.0)
                     if (isinstance(verdict, dict) and verdict.get("ideation")
                             and verdict.get("confidence") in ("high", "medium")):

@@ -15,6 +15,9 @@ BASE_URL = os.getenv("LLM_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
 CHAT_MODEL = os.getenv("CHAT_MODEL", "glm-4-flash-250414")
 # 情绪浓度高的对话（倾诉/低落/危机）自动切换的重模型：共情与语气更好，但首字慢 ~10s
 CHAT_MODEL_HEAVY = os.getenv("CHAT_MODEL_HEAVY", "glm-4.5-flash")
+# 危机 L3 复核模型（安全关键）：留空用 CHAT_MODEL_HEAVY（免费）；
+# 配置付费强模型（如 glm-4.5-plus，一次判定约几厘钱）可显著提升隐晦意念召回
+CRISIS_RECHECK_MODEL = os.getenv("CRISIS_RECHECK_MODEL", "")
 # 记忆抽取/画像更新用的轻量模型：便宜、快
 LITE_MODEL = os.getenv("LITE_MODEL", "glm-4-flash")
 # 策略判定（危机分级）专用模型：要求指令遵循强，与检索并行不拖首字

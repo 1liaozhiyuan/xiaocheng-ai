@@ -9,6 +9,7 @@ SSE 事件约定（前端按 event 分轨渲染）：
 import asyncio
 import json
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -69,6 +70,56 @@ def edit_memory(memory_id: int, body: dict, request: Request):
     except Exception:
         pass  # 索引更新失败不影响主数据，检索仍以 SQLite 为准
     return {"ok": True, "content": content}
+
+
+@router.get("/export")
+def export_data(request: Request, format: str = "json"):
+    """全量数据导出：format=json（备份用）| md（可读版）。"""
+    from fastapi.responses import Response
+    state: AppState = request.app.state.core
+    store = state.store
+    memories = store.all_active_memories() + store.memories_by_status("superseded")         + store.memories_by_status("archived")
+    profile = store.get_profile()
+    diary = store.recent_diary(365)
+    emotions = store.recent_emotion_snapshots(365)
+    sessions = [{"session_id": s["session_id"], "summary": s["summary"]}
+                for s in store.recent_summaries(1000)]
+    conversations = []
+    for s in sessions:
+        msgs = store.session_messages(s["session_id"])
+        conversations.append({"session_id": s["session_id"], "messages": msgs})
+
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    if format == "md":
+        lines = [f"# 小澄的记忆档案（导出于 {stamp}）", ""]
+        lines += ["## 用户画像", ""]
+        lines += [f"- **{k}**: {v}" for k, v in profile.items()] or ["（空）"]
+        lines += ["", "## 长期记忆", ""]
+        for m in memories:
+            status = {"active": "当前", "superseded": "过往", "archived": "已淡忘"}.get(m["status"], m["status"])
+            lines.append(f"- [{status}/{m['category']}] {m['content']}")
+        lines += ["", "## 小澄的日记", ""]
+        for d in diary:
+            lines += [f"### {d['date']}", d["content"], ""]
+        lines += ["## 情绪记录", ""]
+        lines += [f"- {e['date']}：{e['label']}（{e['score']}/10）{e['note'] or ''}" for e in emotions]
+        lines += ["", "## 对话记录", ""]
+        for conv in conversations:
+            lines += [f"### 会话 {conv['session_id']}", ""]
+            for m in conv["messages"]:
+                who = "我" if m["role"] == "user" else "小澄"
+                lines.append(f"**{who}**：{m['content']}")
+            lines.append("")
+        content = chr(10).join(lines)
+        return Response(content, media_type="text/markdown; charset=utf-8",
+                        headers={"Content-Disposition":
+                                 f"attachment; filename=xiaocheng-archive-{stamp}.md"})
+    payload = {"exported_at": stamp, "profile": profile, "memories": memories,
+               "diary": diary, "emotions": emotions, "conversations": conversations}
+    return Response(json.dumps(payload, ensure_ascii=False, indent=2),
+                    media_type="application/json",
+                    headers={"Content-Disposition":
+                             f"attachment; filename=xiaocheng-backup-{stamp}.json"})
 
 
 @router.get("/usage")
