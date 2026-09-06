@@ -5,8 +5,10 @@ const props = defineProps({
   messages: { type: Array, required: true },
   streaming: { type: Boolean, default: false },
   canStop: { type: Boolean, default: false },   // 回复流式中 → 发送按钮变「停止」
+  listening: { type: Boolean, default: false }, // 有未回应消息：「正在听」，无时限
+  allowDuringStream: { type: Boolean, default: false },
 });
-const emit = defineEmits(["send", "stop"]);
+const emit = defineEmits(["send", "stop", "trigger"]);
 
 const draft = ref("");
 const box = ref(null);
@@ -55,7 +57,12 @@ function toggleMic() {
 
 function send() {
   const text = draft.value.trim();
-  if (!text) return;
+  if (!text) {
+    // 空消息 Enter/点击 = 交棒：让小澄回应已说完的内容（回应时机由用户掌控）
+    if (props.listening && !props.streaming) emit("trigger");
+    return;
+  }
+  if (props.streaming && !props.allowDuringStream) return;
   emit("send", text);
   draft.value = "";
   nearBottom.value = true;
@@ -79,10 +86,11 @@ function send() {
         </div>
       </template>
     </div>
-    <div v-if="streaming" class="status-line">小澄正在认真想…</div>
+    <div v-if="listening && !streaming" class="status-line">👂 小澄正在听你说…（说完后按 Enter 或点「该你说了」）</div>
+    <div v-else-if="streaming" class="status-line">小澄正在认真想…</div>
     <div class="inputbar">
       <!-- 输入永远可用：流式回复期间也能先把下一句打好 -->
-      <textarea ref="ta" rows="1" v-model="draft" placeholder="和小澄说点什么…（Enter 发送，Shift+Enter 换行）"
+      <textarea ref="ta" rows="1" v-model="draft" placeholder="和小澄说点什么…（Enter 发送，Shift+Enter 换行；说完后清空再按 Enter 让小澄回应）"
                 @keydown.enter.exact.prevent="send"
                 @input="autoGrow"></textarea>
       <button v-if="asrSupported" class="mic" :class="{ rec: recognizing }"
@@ -91,7 +99,9 @@ function send() {
       <button v-if="canStop" class="stop" title="停止生成"
               @click="emit('stop')">■ 停止</button>
       <button v-else class="primary" @click="send"
-              :disabled="!draft.trim()">发送</button>
+              :disabled="!draft.trim() && !(listening && !streaming)">
+        {{ !draft.trim() && listening && !streaming ? "💬 该你说了" : "发送" }}
+      </button>
     </div>
   </section>
 </template>

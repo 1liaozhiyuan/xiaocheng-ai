@@ -17,10 +17,9 @@ const followupFlag = ref(false);
 const panelOpen = ref(false);
 let sessionId = null;
 let greetingAbort = null;
-const pendingMsgs = ref([]);      // 静默窗口缓冲：连发未回应的消息
-const listening = ref(false);     // 「小澄正在听…」状态
-let debounceTimer = null;
-let queuedAfterStream = [];       // 回复流式期间用户又说的话（排队）   // 开场流：用户先说话时立即中断，把话头交还给用户
+const pendingMsgs = ref([]);      // 连发缓冲：用户说了但小澄还没回应的消息
+let queuedAfterStream = [];       // 回复流式期间用户又说的话（排队）
+// 「小澄正在听」= 有未回应的消息，无时间限制——回应时机由用户显式触发
 let chatAbort = null;       // 回复流：停止按钮用
 const canStop = computed(() => streaming.value && !!chatAbort);
 
@@ -134,13 +133,10 @@ function send(text) {
   }
   messages.value.push({ role: "user", text, time: nowHM() });
   pendingMsgs.value.push(text);
-  listening.value = true;   // 「小澄正在听…」
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(flushPending, 4000);
+  scrollBottom();
 }
 
 async function flushPending() {
-  listening.value = false;
   const batch = pendingMsgs.value.splice(0);
   if (!batch.length) return;
   const msg = reactive({ role: "assistant", text: "", typing: true, meta: "",
@@ -183,9 +179,7 @@ async function flushPending() {
         pendingMsgs.value.push(t);
       }
       queuedAfterStream = [];
-      listening.value = true;
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(flushPending, 2000);
+      // 排队消息等用户显式触发（「该你说了」），保持掌控感
     }
   }
 
@@ -226,6 +220,10 @@ async function nap() {
   }
 }
 
+function triggerResponse() {
+  if (pendingMsgs.value.length && !streaming.value) flushPending();
+}
+
 onMounted(async () => {
   // 界面先出现（不等开场白）：骨架屏只闪一瞬，开场白流式往里填
   ready.value = true;
@@ -258,8 +256,8 @@ onMounted(async () => {
     <main>
       <ChatPanel
         :messages="messages" :streaming="streaming" :can-stop="canStop"
-        :listening="listening" :allow-during-stream="true"
-        @send="send" @stop="stopStream" />
+        :listening="pendingMsgs.length > 0" :allow-during-stream="true"
+        @send="send" @trigger="triggerResponse" @stop="stopStream" />
       <SidePanel
         :memory="memory" :profile="profile" :emotion="emotion"
         :followup-flag="followupFlag" :open="panelOpen" :diary="diary"
