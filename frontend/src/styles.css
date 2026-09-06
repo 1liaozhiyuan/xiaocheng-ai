@@ -1,0 +1,98 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #f5f1ea; height: 100vh; overflow: hidden; }
+#app { display: flex; flex-direction: column; height: 100vh; }
+header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: #fff; border-bottom: 1px solid #e8e0d5; }
+header h1 { font-size: 18px; color: #5a4a3a; }
+.subtitle { color: #b0a494; font-size: 13px; }
+header .spacer { flex: 1; }
+button { cursor: pointer; border: 1px solid #d8cfc2; background: #fff; border-radius: 8px; padding: 6px 14px; color: #5a4a3a; font-size: 13px; }
+button:hover { background: #f0e9df; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.primary { background: #e8927c; border-color: #e8927c; color: #fff; }
+button.primary:hover { background: #d97f68; }
+main { flex: 1; display: flex; min-height: 0; }
+.chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.messages { flex: 1; overflow-y: auto; padding: 24px 32px; display: flex; flex-direction: column; gap: 14px; }
+.msg { max-width: 72%; display: flex; flex-direction: column; gap: 4px; }
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.assistant { align-self: flex-start; align-items: flex-start; }
+.bubble { padding: 10px 16px; border-radius: 16px; line-height: 1.6; font-size: 15px; white-space: pre-wrap; word-break: break-word; }
+.msg.user .bubble { background: #e8927c; color: #fff; border-bottom-right-radius: 4px; }
+.msg.assistant .bubble { background: #fff; color: #3d332a; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+.cursor { animation: blink 1s step-end infinite; color: #b0a494; }
+@keyframes blink { 50% { opacity: 0; } }
+.msg .meta { font-size: 11px; color: #b0a494; padding: 0 6px; }
+.inputbar { display: flex; gap: 10px; padding: 14px 32px; background: #fff; border-top: 1px solid #e8e0d5; }
+.inputbar input { flex: 1; border: 1px solid #d8cfc2; border-radius: 10px; padding: 10px 16px; font-size: 15px; outline: none; }
+.inputbar input:focus { border-color: #e8927c; }
+.panel { width: 340px; background: #fff; border-left: 1px solid #e8e0d5; display: flex; flex-direction: column; }
+.tabs { display: flex; border-bottom: 1px solid #e8e0d5; }
+.tabs button { flex: 1; border: none; border-radius: 0; padding: 12px 0; background: none; font-size: 13px; color: #9a8d7c; }
+.tabs button.on { color: #e8927c; font-weight: 600; box-shadow: inset 0 -2px 0 #e8927c; }
+.panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+.empty { color: #b0a494; font-size: 13px; text-align: center; padding: 30px 0; }
+.mem-item { background: #faf6f0; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 13px; line-height: 1.5; color: #3d332a; display: flex; gap: 8px; align-items: flex-start; }
+.mem-item .tag { flex-shrink: 0; font-size: 11px; color: #9a8d7c; background: #efe6d9; padding: 2px 8px; border-radius: 8px; margin-top: 1px; }
+.mem-item .text { flex: 1; }
+.mem-item .del { flex-shrink: 0; border: none; background: none; color: #c8bbaa; font-size: 14px; padding: 0 2px; }
+.mem-item .del:hover { color: #e05c5c; }
+.profile-row { margin-bottom: 12px; }
+.profile-row .k { font-size: 12px; color: #9a8d7c; margin-bottom: 2px; }
+.profile-row .v { font-size: 14px; color: #3d332a; background: #faf6f0; border-radius: 8px; padding: 8px 12px; }
+.followup { background: #fdf0ee; border: 1px solid #f2cfc7; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #b0563e; margin-bottom: 14px; }
+.chart-title { margin: 14px 0 6px; }
+.mood-chart { display: flex; align-items: flex-end; gap: 8px; height: 110px; padding: 4px 2px 0; }
+.mood-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.mood-bar-wrap { flex: 1; width: 100%; max-width: 26px; display: flex; align-items: flex-end; background: #f3ede4; border-radius: 6px; overflow: hidden; }
+.mood-bar { width: 100%; background: #8fbf8f; border-radius: 6px 6px 0 0; transition: height .4s; }
+.mood-bar.mid { background: #e0c078; }
+.mood-bar.low { background: #e8927c; }
+.mood-date { font-size: 10px; color: #b0a494; margin-top: 4px; }
+.mood-label { font-size: 10px; color: #9a8d7c; }
+.mood-trend { font-size: 12px; color: #9a8d7c; margin-top: 10px; text-align: center; }
+.notice-stack { position: fixed; bottom: 90px; left: 32px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+.notice { font-size: 12px; color: #6b5d4d; background: #fff8ec; border: 1px solid #eadfc8; padding: 6px 14px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+
+/* ── V5.5 体验优化 ── */
+.divider { display: flex; align-items: center; gap: 12px; color: #c5b8a6; font-size: 12px; margin: 6px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #e0d6c8; }
+.msg-foot { display: flex; gap: 8px; align-items: center; padding: 0 6px; }
+.msg.user .msg-foot { flex-direction: row-reverse; }
+.time { font-size: 10px; color: #c5b8a6; }
+.status-line { padding: 4px 32px 0; font-size: 12px; color: #b0a494; }
+.del.warn { color: #fff; background: #e05c5c; border-radius: 6px; padding: 1px 6px; }
+.notice-fade-enter-active, .notice-fade-leave-active { transition: all .35s ease; }
+.notice-fade-enter-from { opacity: 0; transform: translateY(8px); }
+.notice-fade-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* 移动端：窄屏下面板收起为底部抽屉式（点击标签栏按钮切换） */
+@media (max-width: 860px) {
+  main { flex-direction: column; }
+  .panel { position: fixed; right: 0; top: 53px; bottom: 0; width: min(340px, 88vw);
+           transform: translateX(100%); transition: transform .3s; z-index: 20;
+           box-shadow: -4px 0 16px rgba(0,0,0,.08); }
+  .panel.open { transform: translateX(0); }
+  .panel-toggle { display: block !important; }
+  .messages { padding: 16px; }
+  .inputbar { padding: 10px 16px; }
+}
+.panel-toggle { display: none; }
+
+/* ── UX 优化追加：多行输入 / 停止按钮 / 启动骨架 ── */
+.inputbar textarea {
+  flex: 1; border: 1px solid #d8cfc2; border-radius: 10px; padding: 10px 16px;
+  font-size: 15px; outline: none; resize: none; line-height: 1.5;
+  max-height: 140px; font-family: inherit; overflow-y: auto;
+}
+.inputbar textarea:focus { border-color: #e8927c; }
+button.stop { background: #fdf0ee; border-color: #f2cfc7; color: #b0563e; font-weight: 600; }
+button.stop:hover { background: #f9ded9; }
+.boot { height: 100vh; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; color: #9a8d7c; font-size: 14px; }
+.boot-icon { font-size: 40px; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.25); opacity: .6; } }
+
+/* ── 记忆编辑 / 小澄的日记 ── */
+.edit-input { flex: 1; border: 1px solid #e8927c; border-radius: 6px; padding: 4px 8px; font-size: 13px; outline: none; background: #fff; }
+.diary-entry { background: #fffdf8; border: 1px solid #f0e6d6; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+.diary-date { font-size: 11px; color: #b0a494; margin-bottom: 6px; }
+.diary-text { font-size: 13px; line-height: 1.8; color: #4a3f33; white-space: pre-wrap; }
