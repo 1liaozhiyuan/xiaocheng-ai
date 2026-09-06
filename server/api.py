@@ -283,8 +283,3 @@ async def review(request: Request, session_id: str = ""):
     if target in state.sessions:
         state.sessions[target].reviewed = True
     return {"ok": True, "review": result, "profile": profile}
-
-
-@router.get("/session/new_id")
-def new_id():
-    return {"session_id": f"s_{uuid.uuid4().hex[:8]}"}
