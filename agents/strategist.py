@@ -152,6 +152,8 @@ class StrategistAgent:
                 timeout=6.0)
             strategy = self._normalize(initial, user_message)
         except (asyncio.TimeoutError, Exception):
+            import traceback
+            traceback.print_exc()  # DEBUG
             return TurnStrategy()  # 策略是增强件：失败回退默认，绝不阻塞聊天
 
         # L2/L3 语义门控 → 重模型复核：初判非 high 但语义接近意念锚点时，

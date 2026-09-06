@@ -98,8 +98,9 @@ class LLMClient:
                         temperature: float = 0.2,
                         purpose: str = "json"):
         """要求 JSON 输出的结构化调用（记忆抽取、画像更新等用）。"""
-        return await self.chat(messages, model=model or config.LITE_MODEL,
+        text = await self.chat(messages, model=model or config.LITE_MODEL,
                                temperature=temperature, purpose=purpose)
+        return _parse_json(text)
 
 
 def _parse_json(text: str):
