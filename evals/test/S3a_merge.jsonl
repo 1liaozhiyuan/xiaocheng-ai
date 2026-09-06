@@ -1,0 +1,12 @@
+{"id": "S3a-skip-10", "old_memory": "用户在上海工作", "old_category": "fact", "new_info": "我上班的地方在上海呀", "expected": "SKIP"}
+{"id": "S3a-add-05", "old_memory": "用户最近在学吉他", "old_category": "fact", "new_info": "今天体检报告出来了，一切正常", "expected": "ADD"}
+{"id": "S3a-skip-11", "old_memory": "用户计划周末打羽毛球", "old_category": "event", "new_info": "这周约了打羽毛球，就周末", "expected": "SKIP"}
+{"id": "S3a-sup-12", "old_memory": "用户计划周末去爬山", "old_category": "event", "new_info": "周末爬山取消了，天气预报说有暴雨", "expected": "SUPERSEDE"}
+{"id": "S3a-add-01", "old_memory": "用户是后端开发工程师", "old_category": "fact", "new_info": "我今天体检完，医生说我有点缺乏运动", "expected": "ADD"}
+{"id": "S3a-sup-06", "old_memory": "用户在一家游戏公司上班", "old_category": "fact", "new_info": "我跳槽去一家金融科技公司了", "expected": "SUPERSEDE"}
+{"id": "S3a-add-13", "old_memory": "用户的室友对猫毛过敏", "old_category": "fact", "new_info": "我最近迷上了做咖啡拉花", "expected": "ADD"}
+{"id": "S3a-skip-02", "old_memory": "用户养了一只猫叫年糕", "old_category": "fact", "new_info": "我家那只猫咪叫年糕呀", "expected": "SKIP"}
+{"id": "S3a-mrg-11", "old_memory": "用户领养了一只猫", "old_category": "fact", "new_info": "是只橘猫，两个月大，取名橘子", "expected": "MERGE"}
+{"id": "S3a-mrg-03", "old_memory": "用户打算去学游泳", "old_category": "event", "new_info": "游泳课报好了，每周六上午两节课", "expected": "MERGE"}
+{"id": "S3a-mrg-04", "old_memory": "用户有个妹妹", "old_category": "fact", "new_info": "我妹妹比我小四岁，在深圳做设计", "expected": "MERGE"}
+{"id": "S3a-sup-05", "old_memory": "用户喜欢喝美式咖啡", "old_category": "preference", "new_info": "我现在只喝拿铁，美式喝了心悸", "expected": "SUPERSEDE"}
