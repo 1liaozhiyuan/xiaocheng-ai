@@ -39,11 +39,11 @@ export const api = {
     fetch(`/api/greeting?session_id=${sessionId}`, { signal }).then((r) =>
       streamSSE(r, handlers)),
 
-  chat: (sessionId, message, handlers, signal) =>
+  chat: (sessionId, messages, handlers, signal) =>
     fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: sessionId, message }),
+      body: JSON.stringify({ session_id: sessionId, messages }),
       signal,
     }).then((r) => streamSSE(r, handlers)),
 

@@ -16,7 +16,11 @@ const diary = reactive({ entries: [] });
 const followupFlag = ref(false);
 const panelOpen = ref(false);
 let sessionId = null;
-let greetingAbort = null;   // 开场流：用户先说话时立即中断，把话头交还给用户
+let greetingAbort = null;
+const pendingMsgs = ref([]);      // 静默窗口缓冲：连发未回应的消息
+const listening = ref(false);     // 「小澄正在听…」状态
+let debounceTimer = null;
+let queuedAfterStream = [];       // 回复流式期间用户又说的话（排队）   // 开场流：用户先说话时立即中断，把话头交还给用户
 let chatAbort = null;       // 回复流：停止按钮用
 const canStop = computed(() => streaming.value && !!chatAbort);
 
@@ -115,24 +119,38 @@ async function restoreSession() {
   return true;
 }
 
-async function send(text) {
-  if (!text || streaming.value) return;
-  // 用户在开场白打字时先开口：中断开场流，把半截开场保留在原地
-  if (greetingAbort) {
+// turn-taking：用户连发多段时先缓冲，停下约 4 秒才整段回应（像真人倾听）
+function send(text) {
+  if (!text) return;
+  if (greetingAbort) {  // 开场白打字中先开口：中断开场
     greetingAbort.abort();
     greetingAbort = null;
     messages.value.forEach((m) => { m.typing = false; });
   }
+  if (streaming.value) {  // 回复流式中用户又说话：上屏并排队，回复完自动处理
+    messages.value.push({ role: "user", text, time: nowHM() });
+    queuedAfterStream.push(text);
+    return;
+  }
   messages.value.push({ role: "user", text, time: nowHM() });
+  pendingMsgs.value.push(text);
+  listening.value = true;   // 「小澄正在听…」
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(flushPending, 4000);
+}
+
+async function flushPending() {
+  listening.value = false;
+  const batch = pendingMsgs.value.splice(0);
+  if (!batch.length) return;
   const msg = reactive({ role: "assistant", text: "", typing: true, meta: "",
                          time: nowHM() });
   messages.value.push(msg);
   streaming.value = true;
   chatAbort = new AbortController();
-
   try {
-    await api.chat(sessionId, text, (event, data) => {
-      if (event === "delta") { msg.text += data.text;  }
+    await api.chat(sessionId, batch, (event, data) => {
+      if (event === "delta") { msg.text += data.text; }
       else if (event === "meta") {
         if (data.severity === "high") msg.meta = "⚠️ 守护模式";
         else if (data.severity === "low") msg.meta = "💛 认真模式";
@@ -140,26 +158,37 @@ async function send(text) {
         if (data.content) notice(`💭 记住了：${data.content}`);
         loadPanels();
       } else if (event === "error") {
-        msg.text += `\n[出错了：${data.message}]`;
+        msg.text += `[出错了：${data.message}]`;
       }
     }, chatAbort.signal);
   } catch (e) {
     if (e.name === "AbortError") {
       notice("已停止生成");
     } else {
-      msg.text += "\n[连接失败，请确认服务已启动]";
+      msg.text += "[连接失败，请确认服务已启动]";
     }
   } finally {
     msg.typing = false;
     streaming.value = false;
     chatAbort = null;
     speak(msg.text);
-    // 一个字都没生成就停止/失败时，移除空气泡（避免占位的空白消息）
     if (!msg.text) {
       const i = messages.value.indexOf(msg);
       if (i >= 0) messages.value.splice(i, 1);
     }
+    // 回复期间用户排队的消息：自动进入下一轮缓冲
+    if (queuedAfterStream.length) {
+      for (const t of queuedAfterStream) {
+        messages.value.push({ role: "user", text: t, time: nowHM() });
+        pendingMsgs.value.push(t);
+      }
+      queuedAfterStream = [];
+      listening.value = true;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(flushPending, 2000);
+    }
   }
+
 }
 
 function stopStream() {
@@ -229,6 +258,7 @@ onMounted(async () => {
     <main>
       <ChatPanel
         :messages="messages" :streaming="streaming" :can-stop="canStop"
+        :listening="listening" :allow-during-stream="true"
         @send="send" @stop="stopStream" />
       <SidePanel
         :memory="memory" :profile="profile" :emotion="emotion"

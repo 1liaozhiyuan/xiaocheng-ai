@@ -33,7 +33,8 @@ def sse_response(gen) -> StreamingResponse:
 
 class ChatIn(BaseModel):
     session_id: str
-    message: str
+    message: str = ""                     # 兼容单条
+    messages: list[str] | None = None     # 连发批量：一次请求携带多段（turn-taking）
 
 
 def _memory_payload(state: AppState) -> dict:
@@ -173,21 +174,23 @@ async def chat(body: ChatIn, request: Request):
     session = state.revive_session(body.session_id)
     if session is None:
         raise HTTPException(404, "session 不存在")
-    message = body.message.strip()
-    if not message:
+    msgs = [m.strip() for m in (body.messages or [body.message]) if m and m.strip()]
+    if not msgs:
         raise HTTPException(400, "消息不能为空")
     state.touch(session)
-    state.store.add_message(session.id, "user", message)
+    for m in msgs:  # 逐条入库：保持真实对话形态（连发的多段各自成条）
+        state.store.add_message(session.id, "user", m)
+    combined = chr(10).join(msgs)  # 整段理解：策略与回复基于全部连发内容
 
     async def _gen():
         # 策略判断与记忆检索在 reply 内并行（省首字延迟）；
         # meta 事件（守护/认真模式标注）在流尾补发，仅作 UI 标注不影响内容
         strategy_task = asyncio.get_running_loop().create_task(
             state.strategist.decide(
-                message, state.store.recent_messages(session.id, limit=6)))
+                combined, state.store.recent_messages(session.id, limit=6)))
         reply_parts = []
         try:
-            async for delta in state.companion.reply(session.id, message,
+            async for delta in state.companion.reply(session.id, combined,
                                                      strategy_task=strategy_task):
                 reply_parts.append(delta)
                 yield sse("delta", {"text": delta})
