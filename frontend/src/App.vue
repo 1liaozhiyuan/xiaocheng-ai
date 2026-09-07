@@ -33,6 +33,8 @@ function pickVoice() {
 if ("speechSynthesis" in window) {
   pickVoice();
   speechSynthesis.onvoiceschanged = pickVoice;
+  // 某些浏览器 voices 异步加载慢：兜底重试几次
+  for (const d of [300, 800, 1500]) setTimeout(pickVoice, d);
 }
 function toggleTts() {
   ttsEnabled.value = !ttsEnabled.value;
